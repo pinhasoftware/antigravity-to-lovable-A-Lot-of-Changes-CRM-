@@ -14,6 +14,8 @@ const SUGGESTIONS = [
   "Macros para cliente em défice de 500 kcal",
 ];
 
+const HAS_NEW_SUGGESTION = true; // flag para indicar sugestão nova do AI
+
 const CANNED: Record<string, string> = {
   default: "Boa pergunta! No modo demo as respostas são simuladas. Quando ligares ao backend, eu uso o **Lovable AI Gateway** para gerar respostas reais com base no contexto dos teus clientes.",
   hipertrofia: "**Plano 4 dias — Hipertrofia**\n\n- **Seg** Peito + Tríceps\n- **Ter** Costas + Bíceps\n- **Qui** Pernas + Core\n- **Sex** Ombros + Braços\n\n4 séries de 8-12 reps, descanso 60-90s. Progressão: +2.5kg quando bate teto superior 2 semanas seguidas.",
@@ -35,6 +37,7 @@ export default function PTAI() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -75,8 +78,17 @@ export default function PTAI() {
                 </p>
               </div>
               <div className="space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Sugestões</p>
-                {SUGGESTIONS.map((s) => (
+                <button
+                  onClick={() => setSuggestionsOpen((o) => !o)}
+                  className="flex w-full items-center justify-between px-1"
+                >
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Sugestões</span>
+                  {HAS_NEW_SUGGESTION && !suggestionsOpen && (
+                    <span className="rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-accent-foreground">Novo</span>
+                  )}
+                  <span className={cn("text-[10px] text-muted-foreground transition-transform", suggestionsOpen && "rotate-180")}>▼</span>
+                </button>
+                {suggestionsOpen && SUGGESTIONS.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}
@@ -115,7 +127,8 @@ export default function PTAI() {
         </div>
       </ScrollArea>
 
-      <div className="sticky bottom-0 border-t border-border/60 bg-background/90 px-5 py-3 backdrop-blur-xl">
+      {/* Input fixo mesmo acima da barra de navegação */}
+      <div className="border-t border-border/60 bg-background/90 px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-2">
           <Textarea
             value={input}

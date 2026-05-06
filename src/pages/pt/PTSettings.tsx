@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { User, Dumbbell, Bell, Calendar, Users, Wallet, Palette, Plug, Shield, Cog, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { User, Dumbbell, Bell, Calendar, Users, Wallet, Palette, Plug, Shield, Cog, Settings as SettingsIcon, LogOut, Eye } from "lucide-react";
 import { SettingsLayout, type SettingsSection } from "@/components/SettingsLayout";
 import { useDemo } from "@/contexts/DemoContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { useTheme, type ThemeMode } from "@/contexts/ThemeContext";
 import { useProfile, fileToDataURL } from "@/contexts/ProfileContext";
 import { UserAvatar } from "@/components/UserAvatar";
+import { mockClients } from "@/lib/mocks";
 
 const SECTIONS: SettingsSection[] = [
   { id: "geral", label: "Geral", icon: SettingsIcon, items: ["Idioma", "Fuso horário", "Formato de data", "Moeda", "Unidade de peso"] },
@@ -26,6 +27,7 @@ const SECTIONS: SettingsSection[] = [
   { id: "aparencia", label: "Aparência", icon: Palette, items: ["Tema", "Cor da marca"] },
   { id: "integracoes", label: "Integrações", icon: Plug, items: ["WhatsApp Business", "Google Calendar", "Zoom", "Apple Health", "Google Fit", "Exportar para Excel"] },
   { id: "seguranca", label: "Segurança", icon: Shield, items: ["Alterar palavra-passe", "Autenticação de dois fatores", "2FA", "Sessões ativas", "Terminar sessão", "Eliminar conta"] },
+  { id: "visao-aluno", label: "Ver como Aluno", icon: Eye, items: ["Visualizar como aluno"] },
   { id: "avancadas", label: "Avançadas", icon: Cog, items: ["Versão", "Enviar feedback", "Exportar dados", "Termos de Serviço", "Política de Privacidade"] },
 ];
 
@@ -208,6 +210,7 @@ export default function PTSettings() {
           <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground">Política de Privacidade</Button>
         </Section>
       )}
+      {active === "visao-aluno" && <StudentViewSection />}
     </SettingsLayout>
   );
 }
@@ -335,6 +338,40 @@ function ProfileSection() {
       <Field label="Especialidades"><Input placeholder="Hipertrofia, reabilitação, perda de peso..." /></Field>
       <Field label="Certificações"><Textarea placeholder="IPDJ Nível IV, NSCA-CPT..." /></Field>
       <Field label="Localização"><Input placeholder="Lisboa, Portugal" /></Field>
+    </Section>
+  );
+}
+
+function StudentViewSection() {
+  const { setRole } = useDemo();
+  const navigate = useNavigate();
+
+  function viewAs(clientId: string) {
+    // Store the selected client ID for the banner to display
+    localStorage.setItem("hercles.studentView.clientId", clientId);
+    setRole("client");
+    navigate("/app", { replace: true });
+  }
+
+  return (
+    <Section title="Ver como Aluno" desc="Veja exatamente o que os seus alunos vêem">
+      <p className="text-xs text-muted-foreground">Seleciona um aluno para entrar na sua vista. Quando quiser sair, prime o botão que aparece no topo do ecrã.</p>
+      <div className="space-y-2 mt-2">
+        {mockClients.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => viewAs(c.id)}
+            className="flex w-full items-center gap-3 rounded-xl bg-secondary/40 p-3 text-left hover:bg-secondary/70 transition-colors"
+          >
+            <UserAvatar name={c.full_name} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold truncate">{c.full_name}</p>
+              <p className="text-xs capitalize text-muted-foreground">{c.type}</p>
+            </div>
+            <Eye className="h-4 w-4 text-muted-foreground" />
+          </button>
+        ))}
+      </div>
     </Section>
   );
 }

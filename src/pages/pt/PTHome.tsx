@@ -29,7 +29,7 @@ const NOTIFICATIONS: NotificationItem[] = [
 ];
 
 export default function PTHome() {
-  const [aiOpen, setAiOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
   const { profile } = useProfile();
   const firstName = (profile.pt.name || "").trim().split(/\s+/)[0] || "treinador";
 
@@ -90,7 +90,7 @@ export default function PTHome() {
         <KPI icon={UsersIcon} label="Clientes activos" value={String(active)} delta="+1" tone="primary" />
         <KPI icon={Wallet} label="Receita mensal" value={fmtEUR(revenue)} tone="primary" />
         <KPI icon={Activity} label="Assiduidade média" value={`${attendance}%`} tone="primary" />
-        <Link to="/pt/chat" className="contents"><KPI icon={MessageSquare} label="Por responder" value={String(pending)} tone="primary" /></Link>
+        <KPI icon={MessageSquare} label="Por responder" value={String(pending)} tone="primary" />
       </div>
 
       <section className="px-5 pt-4">

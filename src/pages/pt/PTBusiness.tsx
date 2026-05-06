@@ -4,6 +4,7 @@ import { TrendingUp, AlertCircle, CheckCircle2, Clock, AlertTriangle, Check } fr
 import { fmtEUR } from "@/lib/format";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { mockClients, mockSessions, mockPayments, clientById, type MockPayment } from "@/lib/mocks";
 import { toast } from "sonner";
 
@@ -18,6 +19,7 @@ function startOfWeek(d = new Date()) {
 const DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
 export default function PTBusiness() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState("week");
   const [payments, setPayments] = useState<MockPayment[]>(mockPayments);
 
@@ -92,8 +94,20 @@ export default function PTBusiness() {
 
   return (
     <div className="px-5 pb-24 pt-6">
-      <h1 className="text-2xl font-bold tracking-tight">Faturação</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Receita, sessões e renovações</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Faturação</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Receita, sessões e renovações</p>
+        </div>
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="md:hidden" 
+          onClick={() => navigate("/pt/crm")}
+        >
+          Ver CRM
+        </Button>
+      </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         <KPI label="Mensal recorrente" value={fmtEUR(monthly)} icon={<TrendingUp className="h-4 w-4" />} accent="primary" />

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Users, Sparkles, MessageCircle, BarChart3, Settings as SettingsIcon } from "lucide-react";
+import { Home, Users, Sparkles, MessageCircle, BarChart3, Settings as SettingsIcon, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePTUI } from "@/contexts/PTUIContext";
 import { mockChats, overduePayments } from "@/lib/mocks";
@@ -19,6 +19,7 @@ export function PTSidebar() {
     { to: "/pt/ai", label: "Hercles AI", icon: Sparkles, accent: true, match: "/pt/ai", badge: 0 },
     { to: "/pt/chat", label: "Chat", icon: MessageCircle, match: "/pt/chat", badge: unread },
     { to: "/pt/business", label: "Faturação", icon: BarChart3, match: "/pt/business", badge: overdue },
+    { to: "/pt/crm", label: "CRM", icon: Briefcase, match: "/pt/crm", badge: 0 },
   ];
 
   return (

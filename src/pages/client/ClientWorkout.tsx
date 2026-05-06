@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, Check, Dumbbell, Plus, Minus, Sparkles, Video, Clock } from "lucide-react";
+import { Pause, Play, Check, Dumbbell, Plus, Minus, Sparkles, Clock } from "lucide-react";
 import { mockWorkouts, type MockExercise } from "@/lib/mocks";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -156,7 +156,7 @@ export default function ClientWorkout() {
                     : `${ex.sets} × ${ex.reps}${ex.weight_kg ? ` · ${ex.weight_kg} kg` : ""}`}
                 </p>
               </div>
-              {ex.video_url && <Video className="h-4 w-4 text-accent" />}
+              {ex.video_url && <Play className="h-4 w-4 fill-current text-accent" />}
             </div>
           ))}
         </div>
@@ -172,6 +172,43 @@ export default function ClientWorkout() {
             <Play className="mr-2 h-5 w-5 fill-current" />
             Começar treino
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- Finished workout screen ----------
+  if (finished) {
+    return (
+      <div className="flex min-h-[calc(100vh-5rem)] flex-col items-center justify-center px-5 pb-24 pt-8 text-center">
+        <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-gradient-primary text-primary-foreground animate-celebrate shadow-glow">
+          <Check className="h-10 w-10" strokeWidth={3} />
+        </div>
+        <h1 className="mt-5 text-2xl font-black tracking-tight">
+          Treino concluído!
+        </h1>
+        <p className="mt-1 text-sm font-semibold text-primary">{workout.name}</p>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Bom trabalho 💪 {String(Math.floor(seconds / 60)).padStart(2, "0")}:{String(seconds % 60).padStart(2, "0")} de treino
+        </p>
+
+        <div className="mt-8 w-full max-w-xs space-y-3">
+          <Button
+            onClick={() => { window.location.reload(); }}
+            className="h-14 w-full rounded-full bg-gradient-primary text-base font-bold text-primary-foreground shadow-glow"
+          >
+            <Play className="mr-2 h-5 w-5 fill-current" /> Repetir treino
+          </Button>
+          <Button
+            onClick={() => { setFinished(false); setStarted(false); }}
+            variant="outline"
+            className="h-12 w-full rounded-full"
+          >
+            <Sparkles className="mr-2 h-4 w-4" /> Escolher outro treino
+          </Button>
+          <p className="text-[11px] text-muted-foreground px-2">
+            📅 O plano seguinte de acordo com a ordem do teu PT é <span className="font-semibold text-foreground">{mockWorkouts[1]?.name ?? "Treino B"}</span>
+          </p>
         </div>
       </div>
     );
@@ -238,7 +275,7 @@ export default function ClientWorkout() {
         </DialogContent>
       </Dialog>
 
-      {finished && <FinishOverlay seconds={seconds} doneSets={doneSets} totalSets={totalSets} onClose={() => setFinished(false)} />}
+      {/* Finished state is handled as early return above */}
     </div>
   );
 }
@@ -286,10 +323,10 @@ function BlockCard({
                 {ex.video_url && (
                   <button
                     onClick={() => onPlayVideo(ex.video_url!)}
-                    className="grid h-6 w-6 place-items-center rounded-md bg-accent/15 text-accent"
+                    className="grid h-8 w-8 place-items-center rounded-md bg-accent/15 text-accent"
                     aria-label="Ver vídeo"
                   >
-                    <Video className="h-3 w-3" />
+                    <Play className="h-4 w-4 fill-current" />
                   </button>
                 )}
               </div>

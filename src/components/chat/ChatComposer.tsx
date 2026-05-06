@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mic, Paperclip, Send, X, Square, Image as ImageIcon, FileText, Play, Pause } from "lucide-react";
+import { Mic, Paperclip, Send, X, Square, Image as ImageIcon, FileText, Play, Pause, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -55,6 +55,19 @@ export function ChatComposer({ text, setText, pending, setPending, onSend, leftS
   const tickRef = useRef<number | null>(null);
   const startedAtRef = useRef<number>(0);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showGifPicker, setShowGifPicker] = useState(false);
+  const [gifSearch, setGifSearch] = useState("");
+
+  // Curated fallback GIFs (used when Tenor API not available)
+  const FALLBACK_GIFS = [
+    "https://media.tenor.com/4nGaF5G6j2EAAAAC/workout-gym.gif",
+    "https://media.tenor.com/T4OOLQE-RkMAAAAC/thumbsup-thumbs-up.gif",
+    "https://media.tenor.com/Kqe-TNKH10kAAAAC/lets-go-celebration.gif",
+    "https://media.tenor.com/nRLo1WHT9E0AAAAC/encouragement-you-can-do-it.gif",
+    "https://media.tenor.com/oRVrIPVAuqEAAAAC/muscle-strong.gif",
+    "https://media.tenor.com/pKXQT72C3LcAAAAC/high-five-cool.gif",
+  ];
+  const [gifResults, setGifResults] = useState<string[]>(FALLBACK_GIFS);
 
   useEffect(() => {
     return () => {
@@ -202,7 +215,7 @@ export function ChatComposer({ text, setText, pending, setPending, onSend, leftS
             </Button>
             {showAttachMenu && (
               <>
-                <div className="fixed inset-0 z-30" onClick={() => setShowAttachMenu(false)} />
+                <div className="fixed inset-0 z-30" onClick={() => { setShowAttachMenu(false); setShowGifPicker(false); }} />
                 <div className="absolute bottom-12 left-0 z-40 flex flex-col gap-1 rounded-2xl border border-border bg-popover p-1.5 shadow-card">
                   <button
                     type="button"
@@ -217,6 +230,13 @@ export function ChatComposer({ text, setText, pending, setPending, onSend, leftS
                     className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-secondary"
                   >
                     <FileText className="h-4 w-4 text-muted-foreground" /> Ficheiro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAttachMenu(false); setShowGifPicker((v) => !v); }}
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm hover:bg-secondary"
+                  >
+                    <Smile className="h-4 w-4 text-energy" /> GIF
                   </button>
                 </div>
               </>
@@ -257,9 +277,53 @@ export function ChatComposer({ text, setText, pending, setPending, onSend, leftS
           )}
         </div>
       )}
+
+      {/* GIF Picker panel */}
+      {showGifPicker && (
+        <div className="mt-2 rounded-2xl border border-border bg-popover p-2">
+          <div className="mb-2 flex items-center gap-2">
+            <input
+              type="text"
+              value={gifSearch}
+              onChange={(e) => setGifSearch(e.target.value)}
+              placeholder="Procurar GIF…"
+              className="flex-1 rounded-xl bg-secondary px-3 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
+            />
+            <button type="button" onClick={() => setShowGifPicker(false)} className="text-muted-foreground hover:text-foreground">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 max-h-48 overflow-y-auto">
+            {gifResults
+              .filter((url) => !gifSearch || url.toLowerCase().includes(gifSearch.toLowerCase()))
+              .map((url, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setPending((prev) => [
+                      ...prev,
+                      {
+                        id: `gif-${Date.now()}-${i}`,
+                        kind: "image",
+                        url,
+                        name: `GIF ${i + 1}`,
+                      },
+                    ]);
+                    setShowGifPicker(false);
+                  }}
+                  className="overflow-hidden rounded-lg aspect-video bg-secondary"
+                >
+                  <img src={url} alt={`GIF ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function AttachmentPreview({ att, onRemove }: { att: ChatAttachment; onRemove: () => void }) {
   return (

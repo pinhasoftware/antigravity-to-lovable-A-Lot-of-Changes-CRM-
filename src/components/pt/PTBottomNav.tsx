@@ -7,14 +7,14 @@ import { mockChats, overduePayments } from "@/lib/mocks";
 export function PTBottomNav() {
   const { pathname } = useLocation();
   const { resolveClientsRoute } = usePTUI();
-  const unread = mockChats.filter((m) => m.sender_role === "client" && !m.read).length;
+  const unreadThreads = new Set(mockChats.filter((m) => m.sender_role === "client" && !m.read).map((m) => m.client_id)).size;
   const overdue = overduePayments().length;
 
   const tabs = [
     { to: "/pt", label: "Home", icon: Home, end: true, match: "/pt", badge: 0 },
     { to: resolveClientsRoute(), label: "Clientes", icon: Users, match: "/pt/clients", badge: 0 },
     { to: "/pt/ai", label: "AI", icon: Sparkles, accent: true, match: "/pt/ai", badge: 0 },
-    { to: "/pt/chat", label: "Chat", icon: MessageCircle, match: "/pt/chat", badge: unread },
+    { to: "/pt/chat", label: "Chat", icon: MessageCircle, match: "/pt/chat", badge: unreadThreads },
     { to: "/pt/business", label: "Faturação", icon: BarChart3, match: "/pt/business", badge: overdue },
   ];
 

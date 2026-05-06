@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -24,6 +25,7 @@ import PTSettings from "./pages/pt/PTSettings.tsx";
 import PTAI from "./pages/pt/PTAI.tsx";
 import PTChat from "./pages/pt/PTChat.tsx";
 import PTBusiness from "./pages/pt/PTBusiness.tsx";
+import PTCRM from "./pages/pt/PTCRM.tsx";
 import ClientHome from "./pages/client/ClientHome.tsx";
 import ClientWorkout from "./pages/client/ClientWorkout.tsx";
 import ClientChat from "./pages/client/ClientChat.tsx";
@@ -48,12 +50,36 @@ function ThemedSonner() {
   );
 }
 
+function OfflineBanner() {
+  const [offline, setOffline] = useState(false);
+  useEffect(() => {
+    function onOffline() { setOffline(true); }
+    function onOnline() { setOffline(false); }
+    window.addEventListener("offline", onOffline);
+    window.addEventListener("online", onOnline);
+    setOffline(!navigator.onLine);
+    return () => {
+      window.removeEventListener("offline", onOffline);
+      window.removeEventListener("online", onOnline);
+    };
+  }, []);
+  if (!offline) return null;
+  return (
+    <div className="fixed left-0 right-0 top-0 z-[9999] flex items-center justify-center gap-2 bg-destructive px-4 py-2 text-xs font-semibold text-destructive-foreground shadow-md" style={{ paddingTop: "calc(env(safe-area-inset-top) + 8px)" }}>
+      <span>⚠️</span>
+      <span>Sem ligação à internet — funcionalidades limitadas</span>
+    </div>
+  );
+}
+
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
         <Toaster />
         <ThemedSonner />
+        <OfflineBanner />
         <BrowserRouter>
           <AuthProvider>
             <DemoProvider>
@@ -82,6 +108,7 @@ const App = () => (
                     <Route path="chat" element={<PTChat />} />
                     <Route path="chat/:clientId" element={<PTChat />} />
                     <Route path="business" element={<PTBusiness />} />
+                    <Route path="crm" element={<PTCRM />} />
                     <Route path="settings" element={<PTSettings />} />
                   </Route>
 

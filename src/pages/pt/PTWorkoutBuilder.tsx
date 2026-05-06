@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, GripVertical, Plus, Sparkles, Trash2, Link2, Unlink, Video, Upload, Check, X } from "lucide-react";
+import { ArrowLeft, GripVertical, Plus, Sparkles, Trash2, Link2, Unlink, Video, Upload, Check, X, BookMarked, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { mockWorkouts, clientById, type MockExercise } from "@/lib/mocks";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+const YT_LIBRARY_KEY = "hercles.pt.ytLibrary";
+type YTLink = { id: string; name: string; url: string };
+
+function loadYTLibrary(): YTLink[] {
+  try { return JSON.parse(localStorage.getItem(YT_LIBRARY_KEY) ?? "[]"); } catch { return []; }
+}
+function saveYTLibrary(links: YTLink[]) {
+  localStorage.setItem(YT_LIBRARY_KEY, JSON.stringify(links));
+}
 
 export default function PTWorkoutBuilder() {
   const { clientId, workoutId } = useParams();
@@ -238,6 +248,9 @@ function ExerciseDialog({
   const [duration, setDuration] = useState(initial?.duration_s ?? 30);
   const [rest, setRest] = useState(initial?.rest_s ?? 60);
   const [videoUrl, setVideoUrl] = useState(initial?.video_url ?? "");
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [ytLibrary, setYtLibrary] = useState<YTLink[]>(loadYTLibrary);
+  const [newLinkName, setNewLinkName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -246,6 +259,22 @@ function ExerciseDialog({
     const url = URL.createObjectURL(file);
     setVideoUrl(url);
     toast.success("Vídeo carregado.");
+  }
+
+  function saveToLibrary() {
+    if (!videoUrl.trim()) { toast.error("Cola primeiro um link."); return; }
+    const label = newLinkName.trim() || videoUrl.trim().slice(0, 40);
+    const updated = [...ytLibrary, { id: `yt-${Date.now()}`, name: label, url: videoUrl.trim() }];
+    setYtLibrary(updated);
+    saveYTLibrary(updated);
+    setNewLinkName("");
+    toast.success("Link guardado na biblioteca!");
+  }
+
+  function removeFromLibrary(id: string) {
+    const updated = ytLibrary.filter((l) => l.id !== id);
+    setYtLibrary(updated);
+    saveYTLibrary(updated);
   }
 
   function submit() {
@@ -336,8 +365,41 @@ function ExerciseDialog({
             </div>
           </div>
 
+          {/* Video section with library */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Vídeo demonstrativo</Label>
+            <div className="flex items-center justify-between">
+              <Label className="text-xs">Vídeo demonstrativo</Label>
+              <button
+                type="button"
+                onClick={() => setShowLibrary((v) => !v)}
+                className="flex items-center gap-1 text-[11px] text-accent hover:text-accent/80"
+              >
+                <BookMarked className="h-3 w-3" />
+                Biblioteca ({ytLibrary.length})
+              </button>
+            </div>
+
+            {showLibrary && ytLibrary.length > 0 && (
+              <div className="space-y-1 rounded-xl border border-border bg-secondary/20 p-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">Links guardados</p>
+                {ytLibrary.map((link) => (
+                  <div key={link.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setVideoUrl(link.url); setShowLibrary(false); }}
+                      className="flex flex-1 items-center gap-2 rounded-lg bg-background/50 px-2 py-1.5 text-left hover:bg-background/80"
+                    >
+                      <Youtube className="h-3.5 w-3.5 shrink-0 text-red-500" />
+                      <span className="truncate text-xs">{link.name}</span>
+                    </button>
+                    <button type="button" onClick={() => removeFromLibrary(link.id)} className="text-muted-foreground hover:text-destructive">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="flex gap-2">
               <Input
                 value={videoUrl}
@@ -356,12 +418,29 @@ function ExerciseDialog({
               </Button>
             </div>
             {videoUrl && (
-              <p className="flex items-center gap-1 text-[11px] text-accent">
-                <Video className="h-3 w-3" /> Vídeo associado
-                <button onClick={() => setVideoUrl("")} className="ml-1 text-muted-foreground hover:text-destructive">
-                  <X className="h-3 w-3" />
-                </button>
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="flex flex-1 items-center gap-1 text-[11px] text-accent">
+                  <Video className="h-3 w-3" /> Vídeo associado
+                  <button onClick={() => setVideoUrl("")} className="ml-1 text-muted-foreground hover:text-destructive">
+                    <X className="h-3 w-3" />
+                  </button>
+                </p>
+                <div className="flex items-center gap-1">
+                  <Input
+                    value={newLinkName}
+                    onChange={(e) => setNewLinkName(e.target.value)}
+                    placeholder="Nome (opcional)"
+                    className="h-7 w-28 rounded-lg text-[11px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveToLibrary}
+                    className="flex items-center gap-1 rounded-lg bg-accent/15 px-2 py-1 text-[10px] font-semibold text-accent hover:bg-accent/25"
+                  >
+                    <BookMarked className="h-3 w-3" /> Guardar
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         </div>

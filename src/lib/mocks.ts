@@ -7,8 +7,8 @@ export interface MockClient {
   id: string;
   full_name: string;
   avatar_url: string | null;
-  type: "presencial" | "consultoria";
-  status: "ativo" | "atencao" | "inativo";
+  type: "presencial" | "consultoria" | "online";
+  status: "ativo" | "pausado" | "prospeto" | "ex_cliente" | "atencao" | "inativo";
   attendance_pct: number;
   monthly_value: number | null;
   session_value: number | null;
@@ -16,6 +16,10 @@ export interface MockClient {
   goals: string;
   injuries: string;
   notes: string;
+  source?: "referencia" | "instagram" | "google" | "outro";
+  tags?: string[];
+  next_step?: "aguardar_resposta" | "sessao_agendada" | "proposta_enviada" | "sem_resposta";
+  quick_notes?: { text: string; timestamp: string }[];
 }
 
 export interface MockSession {
@@ -99,6 +103,9 @@ export const mockClients: MockClient[] = [
     goals: "Perder 5 kg até ao verão",
     injuries: "Tendinite ombro direito (resolvida)",
     notes: "Muito motivada. Prefere treinos curtos e intensos.",
+    source: "instagram",
+    tags: ["dedicada", "focada"],
+    quick_notes: [{ text: "Fazer avaliação próxima semana", timestamp: new Date().toISOString() }],
   },
   {
     id: "c2",
@@ -113,6 +120,8 @@ export const mockClients: MockClient[] = [
     goals: "Ganho de massa muscular (hipertrofia geral)",
     injuries: "Nenhuma",
     notes: "Treina em casa 4×/semana com halteres ajustáveis.",
+    source: "referencia",
+    tags: ["hipertrofia", "home-workout"],
   },
   {
     id: "c3",
@@ -127,6 +136,41 @@ export const mockClients: MockClient[] = [
     goals: "Reabilitação pós-parto",
     injuries: "Diástase abdominal ligeira",
     notes: "Faltou às últimas 2 sessões. Contactar.",
+    source: "google",
+    tags: ["pós-parto"],
+  },
+  {
+    id: "c4",
+    full_name: "Rui Costa",
+    avatar_url: null,
+    type: "online",
+    status: "prospeto",
+    attendance_pct: 0,
+    monthly_value: 0,
+    session_value: null,
+    start_date: today.toISOString().slice(0, 10),
+    goals: "Perda de peso",
+    injuries: "Nenhuma",
+    notes: "",
+    source: "instagram",
+    tags: ["indeciso"],
+    next_step: "aguardar_resposta",
+  },
+  {
+    id: "c5",
+    full_name: "Tiago Mendes",
+    avatar_url: null,
+    type: "presencial",
+    status: "pausado",
+    attendance_pct: 40,
+    monthly_value: null,
+    session_value: 30,
+    start_date: addDays(today, -300).toISOString().slice(0, 10),
+    goals: "Manutenção",
+    injuries: "Entorse no tornozelo",
+    notes: "Pausado por 1 mês devido a lesão no futebol.",
+    source: "referencia",
+    tags: ["lesionado", "futebol"],
   },
 ];
 
