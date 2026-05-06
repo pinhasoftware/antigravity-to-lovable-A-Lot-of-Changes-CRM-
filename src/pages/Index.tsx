@@ -16,7 +16,7 @@ export default function Index() {
   return (
     <div className="relative mx-auto min-h-screen max-w-md overflow-hidden bg-gradient-hero">
       <title>Hercles — O copilot inteligente de Personal Trainers</title>
-      <meta name="description" content="App PWA para personal trainers e clientes. Treinos, calendário, chat, nutrição e Pilot AI." />
+      <meta name="description" content="App PWA para personal trainers e clientes. Treinos, calendário, chat, nutrição e Hercles AI." />
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
       <div className="pointer-events-none absolute -right-20 top-40 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
@@ -31,7 +31,7 @@ export default function Index() {
           O teu <span className="gradient-text-primary">copilot</span><br />de PT.
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Gere clientes, treinos, faturação e nutrição num só sítio — com Pilot AI sempre a um toque.
+          Gere clientes, treinos, faturação e nutrição num só sítio — com Hercles AI sempre a um toque.
         </p>
 
         <div className="mt-10 space-y-3">

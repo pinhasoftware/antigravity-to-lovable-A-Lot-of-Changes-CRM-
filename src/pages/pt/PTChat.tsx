@@ -95,13 +95,18 @@ export default function PTChat() {
     });
   }, [q, threads, chatStore]);
 
-  if (clientId) {
-    const client = clientById(clientId);
-    return <ChatThread client={client} chatStore={chatStore} setChatStore={setChatStore} onBack={() => navigate("/pt/chat")} />;
-  }
+  const client = clientId ? clientById(clientId) : undefined;
 
   return (
-    <div className="px-5 pb-24 pt-6">
+    <div className="flex h-full w-full overflow-hidden">
+      {/* LEFT PANEL */}
+      <div
+        className={cn(
+          "flex flex-col h-full overflow-y-auto no-scrollbar",
+          clientId ? "hidden md:flex md:w-[280px] md:shrink-0 md:border-r md:border-border/60" : "flex w-full md:w-[280px] md:shrink-0 md:border-r md:border-border/60"
+        )}
+      >
+        <div className="px-5 pb-4 pt-6 h-full">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Chat</h1>
@@ -159,7 +164,10 @@ export default function PTChat() {
                 <Link
                   key={t.client.id}
                   to={`/pt/chat/${t.client.id}`}
-                  className="glass flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/40"
+                  className={cn(
+                    "glass flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/40",
+                    clientId === t.client.id && "bg-secondary/60 ring-1 ring-border"
+                  )}
                 >
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold">
                     {initials(t.client.full_name)}
@@ -238,7 +246,10 @@ export default function PTChat() {
               <Link
                 key={t.client.id}
                 to={`/pt/chat/${t.client.id}`}
-                className="glass flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/40"
+                className={cn(
+                  "glass flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/40",
+                  clientId === t.client.id && "bg-secondary/60 ring-1 ring-border"
+                )}
               >
                 <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-secondary text-sm font-semibold">
                   {initials(t.client.full_name)}
@@ -264,6 +275,25 @@ export default function PTChat() {
           )}
         </div>
       )}
+        </div>
+      </div>
+
+      {/* RIGHT PANEL */}
+      <div
+        className={cn(
+          "flex-col flex-1 h-full min-w-0 bg-background overflow-hidden relative",
+          clientId ? "flex" : "hidden md:flex items-center justify-center"
+        )}
+      >
+        {clientId ? (
+          <ChatThread client={client} chatStore={chatStore} setChatStore={setChatStore} onBack={() => navigate("/pt/chat")} />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-muted-foreground opacity-60">
+            <MessageCircle className="h-12 w-12 mb-4" />
+            <p className="text-sm">Seleciona uma conversa para começar</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -325,9 +355,9 @@ function ChatThread({
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex items-center gap-3 border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur-xl">
-        <button onClick={onBack} className="grid h-9 w-9 place-items-center rounded-full hover:bg-secondary">
+        <button onClick={onBack} className="md:hidden grid h-9 w-9 place-items-center rounded-full hover:bg-secondary">
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div className="grid h-10 w-10 place-items-center rounded-full bg-secondary text-sm font-semibold">

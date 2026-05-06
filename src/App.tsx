@@ -32,6 +32,7 @@ import ClientChat from "./pages/client/ClientChat.tsx";
 import ClientNutrition from "./pages/client/ClientNutrition.tsx";
 import ClientProgress from "./pages/client/ClientProgress.tsx";
 import ClientSettings from "./pages/client/ClientSettings.tsx";
+import Ranking from "./pages/shared/Ranking.tsx";
 
 const queryClient = new QueryClient();
 
@@ -109,6 +110,7 @@ const App = () => (
                     <Route path="chat/:clientId" element={<PTChat />} />
                     <Route path="business" element={<PTBusiness />} />
                     <Route path="crm" element={<PTCRM />} />
+                    <Route path="ranking" element={<Ranking isTrainer={true} />} />
                     <Route path="settings" element={<PTSettings />} />
                   </Route>
 
@@ -126,6 +128,7 @@ const App = () => (
                     <Route path="chat" element={<ClientChat />} />
                     <Route path="nutrition" element={<ClientNutrition />} />
                     <Route path="progress" element={<ClientProgress />} />
+                    <Route path="ranking" element={<Ranking />} />
                     <Route path="settings" element={<ClientSettings />} />
                   </Route>
 

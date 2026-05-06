@@ -57,13 +57,13 @@ export default function PTAI() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-border/60 bg-background/90 px-5 py-3 backdrop-blur-xl">
         <div className="grid h-10 w-10 place-items-center rounded-xl shadow-[var(--shadow-ai)]" style={{ background: "var(--gradient-ai)" }}>
           <Sparkles className="h-5 w-5 text-white" />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Pilot AI</h1>
+          <h1 className="text-xl font-bold tracking-tight">Hercles AI</h1>
           <p className="text-[11px] text-muted-foreground">O teu copilot de treino · demo</p>
         </div>
       </div>

@@ -21,7 +21,7 @@ const CLIENT_NOTIFICATIONS: NotificationItem[] = [
   { id: "cn5", icon: Activity, text: "Check-in semanal disponível.", to: "/app/progress" },
   { id: "cn6", icon: TrophyIcon, text: "Novo recorde pessoal — supino 43,5 kg!", to: "/app/progress" },
   { id: "cn7", icon: ShieldCheck, text: "Protege a tua conta — ativa 2FA.", to: "/app/settings#seguranca" },
-  { id: "cn8", icon: Sparkles, text: "Sugestão da Pilot AI: hidrata-te antes do treino!" },
+  { id: "cn8", icon: Sparkles, text: "Sugestão da Hercles AI: hidrata-te antes do treino!" },
 ];
 
 export default function ClientHome() {
@@ -48,7 +48,7 @@ export default function ClientHome() {
         </div>
       </header>
 
-      <div className="relative mt-5 overflow-hidden rounded-3xl p-5 shadow-glow" style={{ background: "var(--gradient-primary)" }}>
+      <Link to="/app/ranking" className="relative mt-5 block overflow-hidden rounded-3xl p-5 shadow-glow transition-transform active:scale-95" style={{ background: "var(--gradient-primary)" }}>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex items-center justify-between text-primary-foreground">
           <div>
@@ -65,7 +65,7 @@ export default function ClientHome() {
             <p className="text-lg font-bold">21 dias</p>
           </div>
         </div>
-      </div>
+      </Link>
 
       <div className="glass mt-4 rounded-2xl p-4">
         <div className="mb-2 flex items-center justify-between">

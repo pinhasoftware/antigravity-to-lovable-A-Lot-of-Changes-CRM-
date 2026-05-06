@@ -308,7 +308,7 @@ export default function PTClientNew() {
             <div className="ai-border relative rounded-2xl bg-accent/5 p-3.5">
               <div className="flex items-center gap-2 text-xs">
                 <Sparkles className="h-3.5 w-3.5 text-accent" />
-                <span className="font-semibold gradient-text-ai">Pilot AI</span>
+                <span className="font-semibold gradient-text-ai">Hercles AI</span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 Depois de criar, posso gerar planos completos a partir destas notas. Basta pedir no chat.

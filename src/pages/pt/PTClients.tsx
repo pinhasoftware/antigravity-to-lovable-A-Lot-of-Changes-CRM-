@@ -4,6 +4,9 @@ import { addDays, endOfWeek, format, isSameDay, startOfWeek, subDays } from "dat
 import { pt } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Mic, Send, UserPlus, Link2 } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/UserAvatar";
 import { ClientCardMenu } from "@/components/pt/ClientCardMenu";
 import { cn } from "@/lib/utils";
@@ -135,6 +138,11 @@ export default function PTClients() {
   const [aiInput, setAiInput] = useState("");
   const [deletedIds, setDeletedIds] = useState<string[]>([]);
   const [sessions, setSessions] = useState<MockSession[]>(() => [...mockSessions]);
+  
+  // Drag & Drop state
+  const [dragSession, setDragSession] = useState<string | null>(null);
+  const [dropConfirm, setDropConfirm] = useState<{ sessionId: string, newDate: Date } | null>(null);
+  const [newTime, setNewTime] = useState("");
 
   useEffect(() => {
     setLastClientId(null);
@@ -210,8 +218,41 @@ export default function PTClients() {
     setAiInput("");
   }
 
+  function handleMic() {
+    toast.info("A escutar... (demo)");
+    setTimeout(() => {
+      setAiInput("remarca a sessão para sexta 10:30");
+      toast.success("Áudio reconhecido!");
+    }, 1500);
+  }
+
+  function confirmMoveSession() {
+    if (!dropConfirm) return;
+    const session = sessions.find((s) => s.id === dropConfirm.sessionId);
+    if (!session) return;
+
+    const nextDate = new Date(dropConfirm.newDate);
+    if (newTime) {
+      const [h, m] = newTime.split(":");
+      nextDate.setHours(Number(h) || 0, Number(m) || 0, 0, 0);
+    } else {
+      const old = new Date(session.scheduled_at);
+      nextDate.setHours(old.getHours(), old.getMinutes(), 0, 0);
+    }
+
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === dropConfirm.sessionId ? { ...s, scheduled_at: nextDate.toISOString() } : s
+      )
+    );
+    setSelectedDay(nextDate);
+    setDropConfirm(null);
+    setNewTime("");
+    toast.success("Sessão remarcada com sucesso!");
+  }
+
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-y-auto no-scrollbar">
       <header className="sticky top-0 z-30 bg-background/85 backdrop-blur-xl">
         <div className="flex items-center justify-between px-5 pb-3 pt-6">
           <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
@@ -266,6 +307,11 @@ export default function PTClients() {
                   <button
                     key={k}
                     onClick={() => setSelectedDay(d)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragSession) setDropConfirm({ sessionId: dragSession, newDate: d });
+                    }}
                     className={cn(
                       "flex flex-col items-center gap-1 rounded-xl py-2 text-xs transition-all",
                       isSel ? "bg-gradient-primary text-primary-foreground shadow-glow" : isToday ? "bg-secondary" : "hover:bg-secondary/60",
@@ -289,7 +335,7 @@ export default function PTClients() {
               placeholder="Ex: marca treino com Ana sexta 10h"
               className="flex-1 bg-transparent px-3 text-sm outline-none placeholder:text-muted-foreground"
             />
-            <button className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-muted-foreground" aria-label="Ditar"><Mic className="h-4 w-4" /></button>
+            <button onClick={handleMic} className="grid h-9 w-9 place-items-center rounded-full bg-secondary text-muted-foreground" aria-label="Ditar"><Mic className="h-4 w-4" /></button>
             <button onClick={executeAI} className="grid h-9 w-9 place-items-center rounded-full bg-gradient-ai text-accent-foreground shadow-ai" aria-label="Enviar"><Send className="h-4 w-4" /></button>
           </div>
           </div>
@@ -304,7 +350,13 @@ export default function PTClients() {
               {eventsForDay.map((s) => {
                 const c = clientById(s.client_id);
                 return (
-                  <li key={s.id}>
+                  <li 
+                    key={s.id}
+                    draggable
+                    onDragStart={() => setDragSession(s.id)}
+                    onDragEnd={() => setDragSession(null)}
+                    className="cursor-grab active:cursor-grabbing"
+                  >
                     <Link
                       to={c ? `/pt/clients/${c.id}` : "#"}
                       className="glass flex items-center gap-3 rounded-2xl p-3 transition-colors hover:bg-secondary/50"
@@ -377,6 +429,37 @@ export default function PTClients() {
             )}
           </ul>
         </section>
+      )}
+
+      {dropConfirm && (
+        <Dialog open={!!dropConfirm} onOpenChange={(o) => !o && setDropConfirm(null)}>
+          <DialogContent className="max-w-xs">
+            <DialogHeader>
+              <DialogTitle>Remarcar sessão</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <p className="text-sm text-muted-foreground">
+                Vais mover a sessão para <strong>{format(dropConfirm.newDate, "EEEE, d MMM", { locale: pt })}</strong>.
+              </p>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">Nova hora (opcional)</label>
+                <Input 
+                  type="time" 
+                  value={newTime} 
+                  onChange={(e) => setNewTime(e.target.value)} 
+                  className="rounded-xl"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Deixa em branco para manter a hora original ({format(new Date(sessions.find(s => s.id === dropConfirm.sessionId)?.scheduled_at || Date.now()), "HH:mm")}).
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDropConfirm(null)}>Cancelar</Button>
+              <Button onClick={confirmMoveSession} className="bg-gradient-primary text-primary-foreground">Confirmar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

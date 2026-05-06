@@ -24,8 +24,18 @@ export default function PTWorkoutBuilder() {
   const navigate = useNavigate();
   const client = clientId ? clientById(clientId) : undefined;
   const initial = mockWorkouts.find((w) => w.id === workoutId)?.exercises ?? [];
-  const [name, setName] = useState(mockWorkouts.find((w) => w.id === workoutId)?.name ?? "Novo treino");
-  const [exercises, setExercises] = useState<MockExercise[]>(initial);
+  const [name, setName] = useState(() => {
+    if (window.location.search.includes("import=true")) {
+      try { const i = JSON.parse(localStorage.getItem("hercles.pt.importWorkout") || "{}"); return i.name || "Novo treino"; } catch {}
+    }
+    return mockWorkouts.find((w) => w.id === workoutId)?.name ?? "Novo treino";
+  });
+  const [exercises, setExercises] = useState<MockExercise[]>(() => {
+    if (window.location.search.includes("import=true")) {
+      try { const i = JSON.parse(localStorage.getItem("hercles.pt.importWorkout") || "{}"); return i.exercises || []; } catch {}
+    }
+    return initial;
+  });
   const [days, setDays] = useState<string[]>(() => {
     const d = mockWorkouts.find((w) => w.id === workoutId)?.day;
     return d ? [d] : [];
@@ -103,11 +113,25 @@ export default function PTWorkoutBuilder() {
             <Sparkles className="h-3.5 w-3.5 text-accent" /> AI
           </span>
         </div>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full bg-transparent text-2xl font-bold tracking-tight outline-none"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full bg-transparent text-2xl font-bold tracking-tight outline-none"
+          />
+          <button
+            onClick={() => {
+              const current = JSON.parse(localStorage.getItem("hercles.pt.workoutLibrary") ?? "[]");
+              current.push({ id: `wl-${Date.now()}`, name, exercises });
+              localStorage.setItem("hercles.pt.workoutLibrary", JSON.stringify(current));
+              toast.success("Treino guardado na biblioteca!");
+            }}
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent hover:bg-accent/20"
+            title="Guardar na Biblioteca"
+          >
+            <BookMarked className="h-4 w-4" />
+          </button>
+        </div>
         <p className="mt-0.5 text-xs text-muted-foreground">{exercises.length} exercícios · arrasta para reordenar</p>
         <div className="mt-3">
           <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Dias da semana</p>

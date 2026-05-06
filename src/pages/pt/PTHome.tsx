@@ -39,7 +39,7 @@ export default function PTHome() {
   const pending = mockChats.filter((m) => m.sender_role === "client" && !m.read).length;
 
   return (
-    <div className="pb-6">
+    <div className="pb-6 h-full overflow-y-auto no-scrollbar">
       <header className="bg-background">
         <div className="flex items-center justify-between px-5 pb-4 pt-6">
           <div>
@@ -63,7 +63,12 @@ export default function PTHome() {
             <div className="flex items-center gap-2">
               <span className={cn("inline-block transition-transform", aiOpen && "rotate-90")}>▶</span>
               <Sparkles className="h-4 w-4 text-accent" />
-              <span className="text-sm font-semibold gradient-text-ai">Pilot AI · Hoje</span>
+              <span className="text-sm font-semibold gradient-text-ai">Hercles AI • Hoje</span>
+              {!aiOpen && (
+                <span className="ml-1 grid h-5 w-5 place-items-center rounded-full bg-[#f472b6] text-[10px] font-bold text-white shadow-[0_0_8px_#f472b6]">
+                  1
+                </span>
+              )}
             </div>
           </button>
           {aiOpen && (
@@ -101,6 +106,30 @@ export default function PTHome() {
           </div>
           <ChevronRight className="h-5 w-5" />
         </Link>
+      </section>
+
+      <section className="px-5 pt-6">
+        <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Ranking & Competição</h2>
+        <div className="glass rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-yellow-500/15 text-yellow-500">
+              <Trophy className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">Liderança do Mês</p>
+              <div className="mt-1 flex -space-x-2">
+                {mockClients.slice(0, 3).map((c, i) => (
+                  <div key={c.id} className="grid h-6 w-6 place-items-center rounded-full border-2 border-background bg-secondary text-[10px] font-bold">
+                    {c.full_name.charAt(0)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <Link to="/pt/ranking" className="mt-4 block w-full rounded-xl bg-secondary/80 py-2.5 text-center text-xs font-semibold text-foreground transition-colors hover:bg-secondary">
+            Ver Ranking Completo
+          </Link>
+        </div>
       </section>
     </div>
   );

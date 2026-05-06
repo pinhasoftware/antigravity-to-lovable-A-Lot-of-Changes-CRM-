@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Sparkles, Plus, Edit2, PlayCircle, Dumbbell, Apple, History, ClipboardList, ChevronDown, Calendar, Camera, Paperclip, FileText, Trash2, TrendingUp } from "lucide-react";
+import { ArrowLeft, Sparkles, Plus, Edit2, PlayCircle, Dumbbell, Apple, History, ClipboardList, ChevronDown, Calendar, Camera, Paperclip, FileText, Trash2, TrendingUp, BookMarked, Copy } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePTUI } from "@/contexts/PTUIContext";
 import { UserAvatar } from "@/components/UserAvatar";
@@ -30,6 +30,7 @@ export default function PTClientProfile() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(true);
   const [logsOpen, setLogsOpen] = useState(true);
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const { setLastClientId } = usePTUI();
   const client = id ? clientById(id) : undefined;
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -169,7 +170,7 @@ export default function PTClientProfile() {
         <div className="ai-border relative mt-4 rounded-2xl bg-accent/5 p-3.5">
           <div className="mb-1 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-accent" />
-            <span className="text-xs font-bold gradient-text-ai">Pilot AI · Insight</span>
+            <span className="text-xs font-bold gradient-text-ai">Hercles AI · Insight</span>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground">
             {client.status === "atencao"
@@ -224,12 +225,20 @@ export default function PTClientProfile() {
                 </div>
               ))
             )}
-            <button
-              onClick={() => navigate(`/pt/clients/${client.id}/workouts/new`)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
-            >
-              <Plus className="h-4 w-4" /> Adicionar treino ao plano
-            </button>
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <button
+                onClick={() => navigate(`/pt/clients/${client.id}/workouts/new`)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+              >
+                <Plus className="h-4 w-4" /> Novo treino
+              </button>
+              <button
+                onClick={() => setLibraryOpen(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border py-4 text-sm font-semibold text-accent transition-colors hover:border-accent hover:bg-accent/5"
+              >
+                <BookMarked className="h-4 w-4" /> Biblioteca
+              </button>
+            </div>
 
             {/* Pesos/reps reais que o aluno colocou */}
             <Collapsible open={logsOpen} onOpenChange={setLogsOpen} className="glass rounded-2xl">
@@ -395,6 +404,14 @@ export default function PTClientProfile() {
           </div>
         )}
       </section>
+
+      {libraryOpen && (
+        <WorkoutLibraryDialog
+          open={libraryOpen}
+          onClose={() => setLibraryOpen(false)}
+          clientId={client.id}
+        />
+      )}
     </div>
   );
 }
@@ -405,5 +422,70 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</Label>
       {children}
     </div>
+  );
+}
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+function WorkoutLibraryDialog({ open, onClose, clientId }: { open: boolean; onClose: () => void; clientId: string }) {
+  const [savedWorkouts, setSavedWorkouts] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem("hercles.pt.workoutLibrary") ?? "[]"); } catch { return []; }
+  });
+  const navigate = useNavigate();
+
+  function deleteWorkout(id: string) {
+    if (confirm("Tens a certeza que queres eliminar este treino da biblioteca?")) {
+      const next = savedWorkouts.filter((w) => w.id !== id);
+      setSavedWorkouts(next);
+      localStorage.setItem("hercles.pt.workoutLibrary", JSON.stringify(next));
+      toast.success("Treino eliminado da biblioteca.");
+    }
+  }
+
+  function copyWorkout(workout: any) {
+    // Navigate to new workout but with this workout's exercises stored in some way, 
+    // or we can just mock creating it and redirect to it.
+    // For now we'll just show a success toast and close, since we're using mockData.
+    // To actually populate it in the builder we can use localStorage to pass data.
+    localStorage.setItem("hercles.pt.importWorkout", JSON.stringify(workout));
+    toast.success("Treino importado! Redirecionando para o editor...");
+    onClose();
+    navigate(`/pt/clients/${clientId}/workouts/new?import=true`);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <BookMarked className="h-5 w-5 text-accent" /> Biblioteca de Treinos
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-4 max-h-[60vh] overflow-y-auto">
+          {savedWorkouts.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Ainda não tens treinos guardados na biblioteca.</p>
+          ) : (
+            savedWorkouts.map((w) => (
+              <div key={w.id} className="glass flex flex-col gap-3 rounded-2xl p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-bold">{w.name}</p>
+                    <p className="text-xs text-muted-foreground">{w.exercises?.length || 0} exercícios</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => copyWorkout(w)} className="flex-1 bg-accent/20 text-accent hover:bg-accent/30 text-xs h-8">
+                    <Copy className="mr-1.5 h-3.5 w-3.5" /> Copiar para o aluno
+                  </Button>
+                  <Button variant="ghost" onClick={() => deleteWorkout(w.id)} className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

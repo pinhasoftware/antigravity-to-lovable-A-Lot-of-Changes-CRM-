@@ -93,7 +93,7 @@ export default function PTBusiness() {
   const max = Math.max(1, ...data.map((d) => d.total));
 
   return (
-    <div className="px-5 pb-24 pt-6">
+    <div className="px-5 pb-24 pt-6 h-full overflow-y-auto no-scrollbar">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Faturação</h1>
