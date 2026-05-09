@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { User, Dumbbell, Bell, Calendar, Users, Wallet, Palette, Plug, Shield, Cog, Settings as SettingsIcon, LogOut, Eye } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { User, Dumbbell, Bell, Calendar, Users, Palette, Shield, Settings as SettingsIcon, LogOut, HelpCircle, AlertCircle } from "lucide-react";
 import { SettingsLayout, type SettingsSection } from "@/components/SettingsLayout";
 import { useDemo } from "@/contexts/DemoContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,24 +10,22 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useTheme, type ThemeMode } from "@/contexts/ThemeContext";
 import { useProfile, fileToDataURL } from "@/contexts/ProfileContext";
 import { UserAvatar } from "@/components/UserAvatar";
-import { mockClients } from "@/lib/mocks";
+import { cn } from "@/lib/utils";
 
 const SECTIONS: SettingsSection[] = [
   { id: "geral", label: "Geral", icon: SettingsIcon, items: ["Idioma", "Fuso horário", "Formato de data", "Moeda", "Unidade de peso"] },
-  { id: "perfil", label: "Perfil", icon: User, items: ["Nome profissional", "Biografia", "Email", "Telefone", "Especialidades", "Certificações", "Localização"] },
-  { id: "treino", label: "Preferências de Treino", icon: Dumbbell, items: ["Duração padrão da sessão", "Formato preferido", "Sugestões da Hercles AI", "Auto-progressão"] },
+  { id: "perfil", label: "Perfil profissional", icon: User, items: ["Nome profissional", "Biografia", "Email", "Telefone", "Especialidades", "Certificações", "Localização"] },
+  { id: "treino", label: "Preferências de Treino", icon: Dumbbell, items: ["Duração padrão da sessão", "Formato preferido", "Sugestões da Hercles AI"] },
   { id: "notificacoes", label: "Notificações", icon: Bell, items: ["Mensagens de clientes", "Pagamentos em atraso", "Renovações próximas", "Novos check-ins", "Lembretes pessoais", "Resumo diário", "Som das notificações"] },
   { id: "agendamento", label: "Agendamento", icon: Calendar, items: ["Horário de trabalho", "Buffer entre sessões", "Política de cancelamento", "Modalidade preferida"] },
   { id: "clientes", label: "Gestão de Clientes", icon: Users, items: ["Mensagem de boas-vindas", "Frequência de check-ins", "Limite de clientes"] },
-  { id: "pagamentos", label: "Pagamentos e Finanças", icon: Wallet, items: ["Método de pagamento", "IBAN", "NIF"] },
-  { id: "aparencia", label: "Aparência", icon: Palette, items: ["Tema", "Cor da marca"] },
-  { id: "integracoes", label: "Integrações", icon: Plug, items: ["WhatsApp Business", "Google Calendar", "Zoom", "Apple Health", "Google Fit", "Exportar para Excel"] },
+  { id: "aparencia", label: "Aparência", icon: Palette, items: ["Tema", "Cores da minha marca"] },
   { id: "seguranca", label: "Segurança", icon: Shield, items: ["Alterar palavra-passe", "Autenticação de dois fatores", "2FA", "Sessões ativas", "Terminar sessão", "Eliminar conta"] },
-  { id: "avancadas", label: "Avançadas", icon: Cog, items: ["Versão", "Enviar feedback", "Exportar dados", "Termos de Serviço", "Política de Privacidade"] },
 ];
 
 export default function PTSettings() {
@@ -43,17 +41,20 @@ export default function PTSettings() {
     if (id && SECTIONS.some((s) => s.id === id)) setActive(id);
   }, [location.hash]);
 
-  function handleSave() {
-    toast.success("Definições guardadas", { id: "settings-saved" });
-    // Volta para o índice de definições (vista geral) depois de guardar.
-    setActive(null);
-    if (location.hash) navigate("/pt/settings", { replace: true });
-  }
-
   async function handleLogout() {
     setRole(null);
     await signOut();
     navigate("/auth", { replace: true });
+  }
+
+  // Permite que as sub-secções registem uma função de guardar personalizada
+  const sectionSaveRef = useRef<(() => void) | null>(null);
+
+  function handleSave() {
+    if (sectionSaveRef.current) sectionSaveRef.current();
+    toast.success("Definições guardadas", { id: "settings-saved" });
+    setActive(null);
+    if (location.hash) navigate("/pt/settings", { replace: true });
   }
 
   return (
@@ -63,8 +64,17 @@ export default function PTSettings() {
       sections={SECTIONS}
       active={active}
       onSelect={setActive}
-      onSave={handleSave}
+      onSave={active ? handleSave : undefined}
     >
+      {!active && (
+        <div className="mt-10 border-t border-border/40 pt-6 pb-10 text-center">
+          <div className="flex justify-center gap-6 text-[11px] text-muted-foreground">
+            <Link to="#" className="hover:text-foreground">Política de Privacidade</Link>
+            <Link to="#" className="hover:text-foreground">Termos e Condições</Link>
+          </div>
+          <p className="mt-4 text-[10px] text-muted-foreground/60">v1.0.0 · Hercles Trainer</p>
+        </div>
+      )}
       {active === "geral" && (
         <Section title="Geral" desc="Idioma, fuso horário e formatos">
           <FieldSelect label="Idioma" defaultValue="pt-PT" options={[
@@ -113,18 +123,17 @@ export default function PTSettings() {
             { value: "hibrido", label: "Híbrido" },
           ]}/>
           <FieldToggle label="Sugestões da Hercles AI no Workout Builder" defaultChecked />
-          <FieldToggle label="Auto-progressão recomendada" defaultChecked />
         </Section>
       )}
 
       {active === "notificacoes" && (
         <Section title="Notificações" desc="Push e in-app">
-          <FieldToggle label="Mensagens de clientes" defaultChecked />
-          <FieldToggle label="Pagamentos em atraso" defaultChecked />
-          <FieldToggle label="Renovações próximas" defaultChecked />
-          <FieldToggle label="Novos check-ins de clientes" defaultChecked />
-          <FieldToggle label="Lembretes pessoais" defaultChecked />
-          <FieldToggle label="Resumo diário (manhã)" />
+          <FieldToggle label="Mensagens de clientes" defaultChecked help="Recebe alertas quando os teus clientes te enviam mensagens no chat." />
+          <FieldToggle label="Pagamentos em atraso" defaultChecked help="Avisamos-te mal um pagamento ultrapasse a data limite definida." />
+          <FieldToggle label="Renovações próximas" defaultChecked help="Notificações 7 dias antes do plano de um cliente expirar." />
+          <FieldToggle label="Novos check-ins de clientes" defaultChecked help="Sabe mal um aluno responda ao check-in ou submeta novos dados." />
+          <FieldToggle label="Lembretes pessoais" defaultChecked help="Notificações baseadas nos teus lembretes de agenda." />
+          <FieldToggle label="Resumo diário (manhã)" help="Um resumo rápido às 8h com o que tens agendado para o dia." />
           <FieldToggle label="Som das notificações" defaultChecked />
         </Section>
       )}
@@ -158,33 +167,11 @@ export default function PTSettings() {
         </Section>
       )}
 
-      {active === "pagamentos" && (
-        <Section title="Pagamentos e Finanças" desc="Métodos e dados bancários">
-          <FieldSelect label="Método de pagamento preferido" defaultValue="mbway" options={[
-            { value: "mbway", label: "MB WAY" },
-            { value: "transferencia", label: "Transferência bancária" },
-            { value: "stripe", label: "Stripe" },
-            { value: "dinheiro", label: "Dinheiro" },
-          ]}/>
-          <Field label="IBAN"><Input placeholder="PT50 0000 0000 0000 0000 0000 0" /></Field>
-          <Field label="NIF"><Input placeholder="999 999 999" /></Field>
-        </Section>
-      )}
-
       {active === "aparencia" && (
         <Section title="Aparência" desc="Tema e identidade visual">
           <ThemeField />
-          <Field label="Cor da marca"><Input type="color" defaultValue="#BEF264" className="h-11 w-24" /></Field>
-        </Section>
-      )}
-
-      {active === "integracoes" && (
-        <Section title="Integrações" desc="Liga ferramentas externas">
-          <FieldToggle label="WhatsApp Business" />
-          <FieldToggle label="Google Calendar" />
-          <FieldToggle label="Zoom" />
-          <FieldToggle label="Apple Health / Google Fit" />
-          <FieldToggle label="Exportar para Excel" defaultChecked />
+          <div className="my-6 h-px bg-border/40" />
+          <BrandColorsSection onRegisterSave={(fn) => { sectionSaveRef.current = fn; }} />
         </Section>
       )}
 
@@ -197,16 +184,6 @@ export default function PTSettings() {
             <LogOut className="mr-2 h-4 w-4" /> Terminar sessão
           </Button>
           <Button variant="destructive" className="w-full">Eliminar conta</Button>
-        </Section>
-      )}
-
-      {active === "avancadas" && (
-        <Section title="Avançadas" desc="Versão, dados e legal">
-          <Field label="Versão"><Input value="v1.0.0" readOnly /></Field>
-          <Button variant="outline" className="w-full justify-start">Enviar feedback</Button>
-          <Button variant="outline" className="w-full justify-start">Exportar os meus dados</Button>
-          <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground">Termos de Serviço</Button>
-          <Button variant="ghost" className="w-full justify-start text-xs text-muted-foreground">Política de Privacidade</Button>
         </Section>
       )}
     </SettingsLayout>
@@ -247,10 +224,21 @@ function FieldSelect({ label, defaultValue, options }: { label: string; defaultV
   );
 }
 
-function FieldToggle({ label, defaultChecked }: { label: string; defaultChecked?: boolean }) {
+function FieldToggle({ label, defaultChecked, help }: { label: string; defaultChecked?: boolean; help?: string }) {
   return (
     <div className="flex items-center justify-between rounded-xl bg-secondary/40 p-3">
-      <span className="text-sm">{label}</span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm">{label}</span>
+        {help && (
+          <button 
+            type="button" 
+            onClick={() => toast.info(label, { description: help })}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <HelpCircle className="h-3 w-3" />
+          </button>
+        )}
+      </div>
       <Switch defaultChecked={defaultChecked} />
     </div>
   );
@@ -337,6 +325,188 @@ function ProfileSection() {
       <Field label="Certificações"><Textarea placeholder="IPDJ Nível IV, NSCA-CPT..." /></Field>
       <Field label="Localização"><Input placeholder="Lisboa, Portugal" /></Field>
     </Section>
+  );
+}
+
+function BrandColorsSection({ onRegisterSave }: { onRegisterSave: (fn: (() => void) | null) => void }) {
+  const { profile, setBrand } = useProfile();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingEnabled, setPendingEnabled] = useState(false);
+  
+  // Local state for colors to satisfy "must click save to apply" requirement
+  const [localColors, setLocalColors] = useState({
+    primary: profile.brand.primary,
+    background: profile.brand.background,
+    text: profile.brand.text
+  });
+
+  // Register the save function with the parent ref
+  useEffect(() => {
+    onRegisterSave(() => { setBrand(localColors); });
+    return () => onRegisterSave(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localColors]);
+
+  const handleToggle = (checked: boolean) => {
+    setPendingEnabled(checked);
+    setConfirmOpen(true);
+  };
+
+  const confirmChange = () => {
+    setBrand({ enabled: pendingEnabled });
+    setConfirmOpen(false);
+    toast.success(pendingEnabled ? "Cores da marca ativadas!" : "Cores da marca desativadas", {
+      description: "As mudanças serão aplicadas automaticamente à app dos teus alunos."
+    });
+  };
+
+  const enabled = profile.brand.enabled;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-bold">Cores da minha marca</h3>
+            <p className="text-[11px] text-muted-foreground">Personaliza as cores que os teus alunos vêem na app.</p>
+          </div>
+          <Switch 
+            checked={enabled} 
+            onCheckedChange={handleToggle}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className={cn("space-y-4 transition-opacity", !enabled && "opacity-40 pointer-events-none")}>
+          <Field label="Cor Principal">
+            <div className="flex gap-2">
+              <Input 
+                type="color" 
+                value={localColors.primary} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, primary: e.target.value }))}
+                className="h-10 w-20 p-1"
+              />
+              <Input 
+                value={localColors.primary} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, primary: e.target.value }))}
+                className="flex-1"
+              />
+            </div>
+          </Field>
+          
+          <Field label="Cor de Fundo">
+            <div className="flex gap-2">
+              <Input 
+                type="color" 
+                value={localColors.background} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
+                className="h-10 w-20 p-1"
+              />
+              <Input 
+                value={localColors.background} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, background: e.target.value }))}
+                className="flex-1"
+              />
+            </div>
+          </Field>
+
+          <Field label="Cor do Texto">
+            <div className="flex gap-2">
+              <Input 
+                type="color" 
+                value={localColors.text} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
+                className="h-10 w-20 p-1"
+              />
+              <Input 
+                value={localColors.text} 
+                onChange={(e) => setLocalColors(prev => ({ ...prev, text: e.target.value }))}
+                className="flex-1"
+              />
+            </div>
+          </Field>
+        </div>
+
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pré-visualização (App do Aluno)</p>
+          <div className="relative h-[400px] w-[200px] overflow-hidden rounded-[2.5rem] border-[6px] border-secondary/50 shadow-2xl bg-black">
+            {/* Notch */}
+            <div className="absolute top-0 left-1/2 z-20 h-5 w-24 -translate-x-1/2 rounded-b-xl bg-secondary/50" />
+            
+            {/* Mock App Content */}
+            <div 
+              className="relative h-full w-full overflow-hidden p-4 pt-8 transition-colors duration-500"
+              style={{ backgroundColor: enabled ? localColors.background : "#0A0A0A" }}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="h-6 w-20 rounded bg-secondary/20" />
+                <div className="h-8 w-8 rounded-full bg-secondary/20" />
+              </div>
+              
+              <div 
+                className="mb-4 h-24 w-full rounded-2xl p-3 shadow-lg"
+                style={{ backgroundColor: enabled ? localColors.primary : "#BEF264" }}
+              >
+                <div className="h-3 w-1/2 rounded bg-black/10 mb-2" />
+                <div className="h-6 w-3/4 rounded bg-black/20" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 rounded-xl bg-secondary/10 p-3">
+                  <div className="h-8 w-8 rounded-lg bg-secondary/20" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-3/4 rounded bg-secondary/20" />
+                    <div className="h-2 w-1/2 rounded bg-secondary/10" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 rounded-xl bg-secondary/10 p-3">
+                  <div className="h-8 w-8 rounded-lg bg-secondary/20" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-3/4 rounded bg-secondary/20" />
+                    <div className="h-2 w-1/2 rounded bg-secondary/10" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute bottom-6 left-0 right-0 px-4">
+                <div 
+                  className="h-10 w-full rounded-xl shadow-md"
+                  style={{ backgroundColor: enabled ? localColors.primary : "#BEF264" }}
+                />
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground max-w-[180px]">
+            Experimenta as cores para veres como fica na conta dos teus alunos em tempo real.
+          </p>
+        </div>
+      </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-energy" />
+              Confirmar alteração
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-muted-foreground leading-relaxed">
+            {pendingEnabled 
+              ? "Ao ativar as cores da marca, a aparência da app para todos os teus alunos será alterada para as cores que definires." 
+              : "Ao desativar, a app dos teus alunos voltará ao tema padrão da Hercles. As tuas cores personalizadas serão guardadas."}
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button onClick={confirmChange} className="w-full bg-gradient-primary text-primary-foreground">
+              Confirmar e aplicar
+            </Button>
+            <DialogClose asChild>
+              <Button variant="ghost" className="w-full">Cancelar</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

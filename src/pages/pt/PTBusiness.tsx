@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts";
-import { TrendingUp, AlertCircle, CheckCircle2, Clock, AlertTriangle, Check } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle2, Clock, AlertTriangle, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { startOfMonth, subMonths, addMonths, endOfMonth, format } from "date-fns";
+import { pt } from "date-fns/locale";
 import { fmtEUR } from "@/lib/format";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -21,6 +23,7 @@ const DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 export default function PTBusiness() {
   const navigate = useNavigate();
   const [tab, setTab] = useState("week");
+  const [selectedMonth, setSelectedMonth] = useState(startOfMonth(new Date()));
   const [payments, setPayments] = useState<MockPayment[]>(mockPayments);
 
   const overdue = payments.filter((p) => !p.paid && new Date(p.due_date) < new Date());
@@ -73,7 +76,34 @@ export default function PTBusiness() {
     return buckets;
   }, []);
 
-  const data = tab === "week" ? weekData : monthData;
+  const calendarMonthData = useMemo(() => {
+    const start = startOfMonth(selectedMonth);
+    const end = endOfMonth(selectedMonth);
+    const numWeeks = Math.ceil((end.getDate() - 1) / 7) || 4; // roughly 4-5 weeks
+    const buckets = Array.from({ length: numWeeks }, (_, i) => ({
+      label: `Sem ${i + 1}`,
+      date: start,
+      total: 0,
+      count: 0
+    }));
+    
+    for (const s of mockSessions) {
+      if (s.status !== "concluido") continue;
+      const d = new Date(s.scheduled_at);
+      if (d >= start && d <= end) {
+        const weekIdx = Math.floor((d.getDate() - 1) / 7);
+        if (weekIdx >= 0 && weekIdx < numWeeks) {
+          const c = clientById(s.client_id);
+          const value = c?.session_value ?? (c?.monthly_value ? c.monthly_value / 8 : 0);
+          buckets[weekIdx].total += value;
+          buckets[weekIdx].count += 1;
+        }
+      }
+    }
+    return buckets;
+  }, [selectedMonth]);
+
+  const data = tab === "week" ? weekData : tab === "month" ? monthData : calendarMonthData;
   const totalRevenue = data.reduce((a, b) => a + b.total, 0);
   const totalSessions = data.reduce((a, b) => a + b.count, 0);
 
@@ -178,8 +208,28 @@ export default function PTBusiness() {
             <TabsList className="h-8 rounded-full bg-secondary/60 p-0.5">
               <TabsTrigger value="week" className="h-7 rounded-full px-3 text-[11px]">Semana</TabsTrigger>
               <TabsTrigger value="month" className="h-7 rounded-full px-3 text-[11px]">4 sem</TabsTrigger>
+              <TabsTrigger value="mensal" className="h-7 rounded-full px-3 text-[11px]">Mensal</TabsTrigger>
             </TabsList>
           </div>
+          {tab === "mensal" && (
+            <div className="mb-4 flex items-center justify-between rounded-xl bg-secondary/30 px-3 py-2">
+              <button 
+                onClick={() => setSelectedMonth(subMonths(selectedMonth, 1))}
+                className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <p className="text-sm font-bold capitalize">
+                {format(selectedMonth, "MMMM yyyy", { locale: pt })}
+              </p>
+              <button 
+                onClick={() => setSelectedMonth(addMonths(selectedMonth, 1))}
+                className="grid h-7 w-7 place-items-center rounded-lg bg-secondary text-muted-foreground hover:text-foreground"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          )}
           <TabsContent value={tab} className="mt-0">
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">

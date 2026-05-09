@@ -121,7 +121,6 @@ export default function ClientHome() {
                     {format(new Date(s.scheduled_at), "EEEE, HH:mm", { locale: pt })} · {s.duration_min} min
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             ))}
           </div>

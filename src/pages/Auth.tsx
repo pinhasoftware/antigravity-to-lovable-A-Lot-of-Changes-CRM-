@@ -65,9 +65,9 @@ export default function Auth() {
 
   if (signupSent) {
     return (
-      <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-gradient-hero px-6 py-10">
+      <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-gradient-hero px-6 py-10">
         <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
-        <div className="glass-strong relative w-full rounded-2xl p-8 text-center shadow-card animate-fade-in">
+        <div className="glass-strong relative w-full max-w-md rounded-2xl p-8 text-center shadow-card animate-fade-in">
           <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow">
             <MailCheck className="h-8 w-8 text-primary-foreground" />
           </div>
@@ -90,10 +90,10 @@ export default function Auth() {
   }
 
   return (
-    <div className="relative mx-auto flex min-h-screen max-w-md flex-col items-center justify-center bg-gradient-hero px-6 py-10">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center bg-gradient-hero px-6 py-10">
       <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
 
-      <div className="relative w-full animate-fade-in">
+      <div className="relative w-full max-w-md animate-fade-in">
         <div className="mb-8 flex flex-col items-center text-center">
           <img src={herclesLogo} alt="Hercles" className="mb-5 h-28 w-auto" />
           <h1 className="text-3xl font-bold tracking-tight">Hercles</h1>

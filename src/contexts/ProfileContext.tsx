@@ -15,11 +15,23 @@ interface Profile {
     name: string;
     avatarDataUrl: string | null;
   };
+  brand: {
+    enabled: boolean;
+    primary: string;
+    background: string;
+    text: string;
+  };
 }
 
 const DEFAULT: Profile = {
   pt: { name: "", avatarDataUrl: null },
   client: { name: "", avatarDataUrl: null },
+  brand: {
+    enabled: false,
+    primary: "#BEF264",
+    background: "#0A0A0A",
+    text: "#FFFFFF",
+  },
 };
 
 const KEY = "hercles.profile.v1";
@@ -31,6 +43,7 @@ interface Ctx {
   setClientAvatar: (dataUrl: string | null) => void;
   setPTName: (name: string) => void;
   setClientName: (name: string) => void;
+  setBrand: (brand: Partial<Profile["brand"]>) => void;
 }
 
 const ProfileContext = createContext<Ctx | undefined>(undefined);
@@ -46,6 +59,7 @@ function load(): Profile {
       ...parsed,
       pt: { ...DEFAULT.pt, ...(parsed.pt ?? {}) },
       client: { ...DEFAULT.client, ...(parsed.client ?? {}) },
+      brand: { ...DEFAULT.brand, ...(parsed.brand ?? {}) },
     };
   } catch {
     return DEFAULT;
@@ -90,6 +104,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         setClientAvatar: (d) => setProfile((p) => ({ ...p, client: { ...p.client, avatarDataUrl: d } })),
         setPTName: (n) => setProfile((p) => ({ ...p, pt: { ...p.pt, name: n } })),
         setClientName: (n) => setProfile((p) => ({ ...p, client: { ...p.client, name: n } })),
+        setBrand: (b) => setProfile((p) => ({ ...p, brand: { ...p.brand, ...b } })),
       }}
     >
       {children}

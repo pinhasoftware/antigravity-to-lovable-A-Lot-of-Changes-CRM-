@@ -43,13 +43,26 @@ export function NotificationsBell({ items, align = "right", storageKey = "fitpil
       return new Set<string>(raw ? JSON.parse(raw) : []);
     } catch { return new Set(); }
   });
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem(storageKey + ".read");
+      return new Set<string>(raw ? JSON.parse(raw) : []);
+    } catch { return new Set(); }
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     try { localStorage.setItem(storageKey, JSON.stringify(Array.from(clearedIds))); } catch { /* noop */ }
   }, [clearedIds, storageKey]);
 
-  const visible = useMemo(() => items.filter((n) => !clearedIds.has(n.id)), [items, clearedIds]);
+  useEffect(() => {
+    try { localStorage.setItem(storageKey + ".read", JSON.stringify(Array.from(readIds))); } catch { /* noop */ }
+  }, [readIds, storageKey]);
+
+  const visible = useMemo(() => items.filter((n) => !clearedIds.has(n.id)).map(n => ({
+    ...n,
+    unread: n.unread && !readIds.has(n.id)
+  })), [items, clearedIds, readIds]);
   const unreadCount = visible.filter((n) => n.unread).length;
 
   function go(to?: string) {
@@ -127,7 +140,12 @@ export function NotificationsBell({ items, align = "right", storageKey = "fitpil
                     {n.to ? (
                       <>
                         <button
-                          onClick={() => setRevealedId(isRevealed ? null : n.id)}
+                          onClick={() => {
+                            setRevealedId(isRevealed ? null : n.id);
+                            if (n.unread && !isRevealed) {
+                              setReadIds(prev => new Set(prev).add(n.id));
+                            }
+                          }}
                           className={cn(
                             "block w-full transition-transform duration-200 hover:bg-secondary/40",
                             isRevealed && "-translate-x-16",

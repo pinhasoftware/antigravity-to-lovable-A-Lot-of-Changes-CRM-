@@ -14,10 +14,28 @@ interface ProgressPhoto { id: string; url: string; date: string; note?: string; 
 const PHOTOS_KEY = "fitpilot.client.progressPhotos";
 
 export default function ClientProgress() {
-  const w = mockClientStats.weight_history;
+  const [weightHistory, setWeightHistory] = useState(() => {
+    try {
+      const stored = localStorage.getItem("fitpilot.client.weightHistory");
+      return stored ? JSON.parse(stored) : mockClientStats.weight_history;
+    } catch { return mockClientStats.weight_history; }
+  });
+  const [targetWeight, setTargetWeight] = useState(() => {
+    try {
+      return parseFloat(localStorage.getItem("fitpilot.client.targetWeight") || "0") || 0;
+    } catch { return 0; }
+  });
+
+  const w = weightHistory;
   const v = mockClientStats.volume_history;
   const weightDelta = +(w[w.length - 1].kg - w[0].kg).toFixed(1);
   const volumeDelta = +(v[v.length - 1].tons - v[0].tons).toFixed(1);
+
+  const [weightDialogOpen, setWeightDialogOpen] = useState(false);
+  const [targetDialogOpen, setTargetDialogOpen] = useState(false);
+  const [newWeight, setNewWeight] = useState("");
+  const [newWeightDate, setNewWeightDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
+  const [tempTarget, setTempTarget] = useState(targetWeight.toString());
 
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -63,6 +81,27 @@ export default function ClientProgress() {
     persist(photos.filter((p) => p.id !== id));
   }
 
+  function handleAddWeight() {
+    const kg = parseFloat(newWeight);
+    if (!kg) return;
+    const dateObj = new Date(newWeightDate);
+    const weekLabel = `S${format(dateObj, "w")}`;
+    const next = [...weightHistory, { week: weekLabel, kg }].sort((a, b) => a.week.localeCompare(b.week));
+    setWeightHistory(next);
+    localStorage.setItem("fitpilot.client.weightHistory", JSON.stringify(next));
+    setWeightDialogOpen(false);
+    setNewWeight("");
+    toast.success("Peso registado");
+  }
+
+  function handleSetTarget() {
+    const kg = parseFloat(tempTarget);
+    setTargetWeight(kg);
+    localStorage.setItem("fitpilot.client.targetWeight", kg.toString());
+    setTargetDialogOpen(false);
+    toast.success("Objetivo atualizado");
+  }
+
   return (
     <div className="px-5 pb-6 pt-6">
       <h1 className="text-2xl font-bold tracking-tight">Progresso</h1>
@@ -81,9 +120,12 @@ export default function ClientProgress() {
           deltaLabel="kg"
           positive={weightDelta < 0}
           current={`${w[w.length - 1].kg} kg`}
+          onEdit={() => setWeightDialogOpen(true)}
+          onTarget={() => setTargetDialogOpen(true)}
+          target={targetWeight > 0 ? `${targetWeight} kg` : undefined}
         >
           <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={w} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+            <AreaChart data={w} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
               <defs>
                 <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
@@ -91,16 +133,63 @@ export default function ClientProgress() {
                 </linearGradient>
               </defs>
               <XAxis dataKey="week" tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
-              <YAxis domain={["dataMin - 0.5", "dataMax + 0.5"]} tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
+              <YAxis domain={["dataMin - 2", "dataMax + 2"]} tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }}
                 formatter={(v: number) => [`${v} kg`, "Peso"]}
               />
-              <Area type="monotone" dataKey="kg" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#g1)" />
+              <Area type="monotone" dataKey="kg" stroke="hsl(var(--primary))" strokeWidth={2.5} fill="url(#g1)" dot={{ fill: "hsl(var(--primary))", r: 3 }} />
+              {targetWeight > 0 && (
+                <Line
+                  type="monotone"
+                  data={w.map(item => ({ ...item, target: targetWeight }))}
+                  dataKey="target"
+                  stroke="hsl(var(--energy))"
+                  strokeDasharray="5 5"
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
       </section>
+
+      {/* WEIGHT DIALOGS */}
+      <Dialog open={weightDialogOpen} onOpenChange={setWeightDialogOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Registar Peso</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground">DATA</label>
+              <Input type="date" value={newWeightDate} onChange={(e) => setNewWeightDate(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground">PESO (KG)</label>
+              <Input type="number" step="0.1" value={newWeight} onChange={(e) => setNewWeight(e.target.value)} placeholder="0.0" />
+            </div>
+            <Button onClick={handleAddWeight} className="w-full bg-gradient-primary">Guardar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={targetDialogOpen} onOpenChange={setTargetDialogOpen}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Objetivo de Peso</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-muted-foreground">META (KG)</label>
+              <Input type="number" step="0.1" value={tempTarget} onChange={(e) => setTempTarget(e.target.value)} placeholder="0.0" />
+            </div>
+            <Button onClick={handleSetTarget} className="w-full bg-energy text-white">Definir Objetivo</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <section className="mt-4">
         <ChartCard
@@ -278,20 +367,36 @@ function Stat({ icon: Icon, label, value, tone }: { icon: React.ElementType; lab
 }
 
 function ChartCard({
-  title, delta, deltaLabel, positive, current, children,
+  title, delta, deltaLabel, positive, current, children, onEdit, onTarget, target,
 }: {
-  title: string; delta: number; deltaLabel: string; positive: boolean; current: string; children: React.ReactNode;
+  title: string; delta: number; deltaLabel: string; positive: boolean; current: string; children: React.ReactNode; 
+  onEdit?: () => void; onTarget?: () => void; target?: string;
 }) {
   return (
     <div className="glass rounded-2xl p-4">
-      <div className="mb-2 flex items-center justify-between">
-        <div>
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex-1">
           <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{title}</p>
-          <p className="text-xl font-bold">{current}</p>
+          <div className="flex items-baseline gap-2">
+            <p className="text-xl font-bold">{current}</p>
+            {target && (
+              <p className="text-[10px] font-bold text-energy uppercase">Meta: {target}</p>
+            )}
+          </div>
         </div>
-        <div className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${positive ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
-          {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-          {delta > 0 ? "+" : ""}{delta} {deltaLabel}
+        <div className="flex flex-col items-end gap-1">
+          <div className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-bold ${positive ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"}`}>
+            {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+            {delta > 0 ? "+" : ""}{delta} {deltaLabel}
+          </div>
+          <div className="flex gap-1">
+            {onTarget && (
+              <button onClick={onTarget} className="text-[9px] font-bold text-muted-foreground hover:text-energy underline underline-offset-2">Objetivo</button>
+            )}
+            {onEdit && (
+              <button onClick={onEdit} className="text-[9px] font-bold text-muted-foreground hover:text-primary underline underline-offset-2 ml-2">Editar</button>
+            )}
+          </div>
         </div>
       </div>
       {children}

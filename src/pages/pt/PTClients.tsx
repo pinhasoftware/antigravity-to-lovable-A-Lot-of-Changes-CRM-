@@ -30,6 +30,35 @@ function stripAccents(s: string) {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function TimeSelect({ value, onChange }: { value: string, onChange: (v: string) => void }) {
+  const [h, m] = (value || "09:00").split(":");
+  
+  return (
+    <div className="flex h-10 min-w-[120px] items-center justify-center gap-1 rounded-lg border border-input bg-background px-3 text-base shadow-sm focus-within:ring-1 focus-within:ring-ring">
+      <select 
+        value={h} 
+        onChange={e => onChange(`${e.target.value}:${m}`)} 
+        className="bg-transparent outline-none text-center font-medium"
+      >
+        {Array.from({length: 24}).map((_, i) => {
+          const val = i.toString().padStart(2, "0");
+          return <option key={val} value={val}>{val}h</option>;
+        })}
+      </select>
+      <span className="font-bold text-muted-foreground">:</span>
+      <select 
+        value={m} 
+        onChange={e => onChange(`${h}:${e.target.value}`)} 
+        className="bg-transparent outline-none text-center font-medium"
+      >
+        {['00', '15', '30', '45'].map(mins => (
+          <option key={mins} value={mins}>{mins}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 /**
  * Mini-parser PT para alterações ao calendário via texto.
  * Suporta exemplos:
@@ -443,11 +472,9 @@ export default function PTClients() {
               </p>
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">Nova hora (opcional)</label>
-                <Input 
-                  type="time" 
-                  value={newTime} 
-                  onChange={(e) => setNewTime(e.target.value)} 
-                  className="rounded-xl"
+                <TimeSelect
+                  value={newTime || format(new Date(sessions.find(s => s.id === dropConfirm.sessionId)?.scheduled_at || Date.now()), "HH:mm")}
+                  onChange={(v) => setNewTime(v)} 
                 />
                 <p className="text-[10px] text-muted-foreground">
                   Deixa em branco para manter a hora original ({format(new Date(sessions.find(s => s.id === dropConfirm.sessionId)?.scheduled_at || Date.now()), "HH:mm")}).

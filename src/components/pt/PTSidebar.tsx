@@ -5,6 +5,7 @@ import { usePTUI } from "@/contexts/PTUIContext";
 import { mockChats, overduePayments } from "@/lib/mocks";
 import { useProfile } from "@/contexts/ProfileContext";
 import { UserAvatar } from "@/components/UserAvatar";
+import herclesLogo from "@/assets/hercles-logo.png";
 
 export function PTSidebar() {
   const { pathname } = useLocation();
@@ -25,8 +26,8 @@ export function PTSidebar() {
   return (
     <aside className="hidden h-[100dvh] w-64 shrink-0 flex-col border-r border-border/60 bg-background/95 backdrop-blur-xl md:flex">
       <div className="flex items-center gap-2 px-5 py-5">
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
-          <span className="text-sm font-extrabold">H</span>
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-background border border-border/40 shadow-sm overflow-hidden">
+          <img src={herclesLogo} alt="H" className="h-6 w-auto" />
         </div>
         <div className="leading-tight">
           <p className="text-sm font-bold tracking-tight">Hercles</p>

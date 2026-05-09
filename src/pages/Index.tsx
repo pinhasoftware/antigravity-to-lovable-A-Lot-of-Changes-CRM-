@@ -14,14 +14,14 @@ export default function Index() {
   }, [user, role, loading, navigate]);
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-md overflow-hidden bg-gradient-hero">
+    <div className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-hidden bg-gradient-hero">
       <title>Hercles — O copilot inteligente de Personal Trainers</title>
       <meta name="description" content="App PWA para personal trainers e clientes. Treinos, calendário, chat, nutrição e Hercles AI." />
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-glow" />
       <div className="pointer-events-none absolute -right-20 top-40 h-72 w-72 rounded-full bg-accent/15 blur-3xl" />
 
-      <div className="relative flex min-h-screen flex-col px-6 pb-10 pt-16">
+      <div className="relative flex w-full max-w-md flex-col px-6 pb-10 pt-16 h-full min-h-screen">
         <div className="mb-10 flex items-center gap-2">
           <img src={herclesLogo} alt="Hercles" className="h-14 w-auto" />
           <span className="text-lg font-bold tracking-tight">Hercles</span>

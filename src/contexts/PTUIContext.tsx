@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 
 type Tab = "Calendário" | "Todos" | "Presencial" | "Consultoria" | "Atenção";
 
-export type CRMTab = "Todos" | "Ativos" | "Pausados" | "Prospetos" | "Ex-clientes";
+export type CRMTab = "Todos" | "Ativos" | "Pausados" | "Potenciais clientes" | "Ex-clientes";
 export interface CRMFilters {
   service: "all" | "presencial" | "consultoria" | "online";
   payment: "all" | "em_dia" | "em_falta";

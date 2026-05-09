@@ -17,6 +17,35 @@ import { PAYMENT_FREQUENCY_LABEL, type PaymentFrequency } from "@/lib/mocks";
 
 const WEEKDAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
+function TimeSelect({ value, onChange }: { value: string, onChange: (v: string) => void }) {
+  const [h, m] = (value || "09:00").split(":");
+  
+  return (
+    <div className="flex h-10 min-w-[120px] items-center justify-center gap-1 rounded-lg border border-input bg-background px-3 text-base shadow-sm focus-within:ring-1 focus-within:ring-ring">
+      <select 
+        value={h} 
+        onChange={e => onChange(`${e.target.value}:${m}`)} 
+        className="bg-transparent outline-none text-center font-medium"
+      >
+        {Array.from({length: 24}).map((_, i) => {
+          const val = i.toString().padStart(2, "0");
+          return <option key={val} value={val}>{val}h</option>;
+        })}
+      </select>
+      <span className="font-bold text-muted-foreground">:</span>
+      <select 
+        value={m} 
+        onChange={e => onChange(`${h}:${e.target.value}`)} 
+        className="bg-transparent outline-none text-center font-medium"
+      >
+        {['00', '15', '30', '45'].map(mins => (
+          <option key={mins} value={mins}>{mins}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export default function PTClientNew() {
   const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
@@ -204,13 +233,9 @@ export default function PTClientNew() {
                     {sessionDays.map((d) => (
                       <div key={d} className="flex items-center gap-2 rounded-xl bg-secondary/40 p-2">
                         <span className="grid h-10 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 text-xs font-bold text-primary">{d}</span>
-                        <Input
-                          type="time"
-                          lang="pt-PT"
-                          step={60}
-                          value={dayTimes[d] ?? ""}
-                          onChange={(e) => setDayTimes((t) => ({ ...t, [d]: e.target.value }))}
-                          className="h-10 min-w-[160px] flex-1 rounded-lg text-base"
+                        <TimeSelect
+                          value={dayTimes[d] ?? "09:00"}
+                          onChange={(v) => setDayTimes((t) => ({ ...t, [d]: v }))}
                         />
                       </div>
                     ))}
@@ -315,15 +340,16 @@ export default function PTClientNew() {
               </p>
             </div>
 
-          <div className="sticky bottom-20 z-20 -mx-5 mt-6 border-t border-border/40 bg-background/90 px-5 py-3 backdrop-blur-xl">
-            <Button
-              onClick={createClient}
-              disabled={!name.trim()}
-              className="h-12 w-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-40"
-            >
-              Criar cliente
-            </Button>
-          </div>
+            {/* Submit Button - Normal flow at the bottom */}
+            <div className="mt-8 pt-4 pb-8">
+              <Button
+                onClick={createClient}
+                disabled={!name.trim()}
+                className="h-12 w-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-40"
+              >
+                Criar cliente
+              </Button>
+            </div>
           </div>
         </>
       ) : (

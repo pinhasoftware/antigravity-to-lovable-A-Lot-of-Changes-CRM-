@@ -24,7 +24,7 @@ const TABS: { id: CRMTab; label: string }[] = [
   { id: "Todos", label: "Todos" },
   { id: "Ativos", label: "Ativos" },
   { id: "Pausados", label: "Pausados" },
-  { id: "Prospetos", label: "Prospetos" },
+  { id: "Potenciais clientes", label: "Potenciais clientes" },
   { id: "Ex-clientes", label: "Ex-clientes" },
 ];
 
@@ -64,7 +64,7 @@ export default function PTCRM() {
       // 1. Tab filter
       if (crmTab === "Ativos" && client.status !== "ativo") return false;
       if (crmTab === "Pausados" && client.status !== "pausado") return false;
-      if (crmTab === "Prospetos" && client.status !== "prospeto") return false;
+      if (crmTab === "Potenciais clientes" && client.status !== "prospeto") return false;
       if (crmTab === "Ex-clientes" && client.status !== "ex_cliente") return false;
 
       // 2. Search
@@ -228,8 +228,8 @@ export default function PTCRM() {
                   <Th label="Tempo como cliente" />
                   <Th label="Origem" sortKey="source" currentSort={sortConfig} onSort={handleSort} />
                   <Th label="Tags" />
-                  {crmTab === "Prospetos" && <Th label="Próximo Passo" sortKey="next_step" currentSort={sortConfig} onSort={handleSort} />}
-                  <th className="px-4 py-3 text-right">Ações</th>
+                  {crmTab === "Potenciais clientes" && <Th label="Próximo Passo" sortKey="next_step" currentSort={sortConfig} onSort={handleSort} />}
+                  <th className="sticky right-0 z-10 bg-background/95 px-4 py-3 text-right backdrop-blur before:absolute before:inset-y-0 before:-left-4 before:w-4 before:bg-gradient-to-r before:from-transparent before:to-background">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
@@ -270,7 +270,7 @@ export default function PTCRM() {
                       <td className="px-4 py-3">
                         {hasOverdue ? (
                           <span className="inline-flex items-center rounded-full bg-destructive/15 px-2 py-0.5 text-[10px] font-bold text-destructive">
-                            Em falta — {overdueDays} dias
+                            {overdueDays} dia{overdueDays !== 1 ? 's' : ''} de atraso
                           </span>
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
@@ -291,12 +291,12 @@ export default function PTCRM() {
                           ))}
                         </div>
                       </td>
-                      {crmTab === "Prospetos" && (
+                      {crmTab === "Potenciais clientes" && (
                         <td className="px-4 py-3 text-xs text-muted-foreground">
                           {client.next_step?.replace(/_/g, " ") || "—"}
                         </td>
                       )}
-                      <td className="px-4 py-3 text-right">
+                      <td className="sticky right-0 z-10 bg-secondary/80 px-4 py-3 text-right backdrop-blur before:absolute before:inset-y-0 before:-left-4 before:w-4 before:bg-gradient-to-r before:from-transparent before:to-secondary/80 group-hover:bg-secondary">
                         <ClientActions client={client} />
                       </td>
                     </tr>
@@ -394,7 +394,7 @@ function ClientActions({ client }: { client: any }) {
           <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Mudar estado</div>
           <DropdownMenuItem onClick={() => handleChangeStatus("ativo")}>Ativo</DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleChangeStatus("pausado")}>Pausado</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleChangeStatus("prospeto")}>Prospeto</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleChangeStatus("prospeto")}>Potencial cliente</DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleChangeStatus("ex_cliente")}>Ex-cliente</DropdownMenuItem>
 
           <div className="my-1 h-px bg-border/60" />
